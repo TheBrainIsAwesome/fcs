@@ -1,5 +1,5 @@
 /**
- * Overwatch v2.2 by TheBrain (heavily revised & extended)
+ * Overwatch v2.2 by TheBrain 
  *
  * FIXES v2.0 → v2.1:
  *  - renderSector: data.x/data.y použito místo sector.x/sector.y pro výpočet pozice
