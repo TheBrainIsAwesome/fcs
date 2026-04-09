@@ -1,82 +1,185 @@
-// © 2026 TheBrain 
-// Dodge Calculator v3 — Alert System + Sound Settings + Travel Calc + History
+// © 2026 TheBrain
+// Dodge Calculator v4 — Blood Red Edition
 
 (function () {
     if (document.getElementById('__dodge_calc')) return;
 
-    // ─── STYLES ──────────────────────────────────────────────────────────────────
     var s = document.createElement('style');
     s.textContent = [
-        '#__dc{position:fixed;top:20px;right:20px;width:360px;background:#111;color:#eee;border:1px solid #3a3a3a;border-radius:10px;z-index:999999;font-family:system-ui,sans-serif;font-size:13px;box-shadow:0 4px 24px rgba(0,0,0,.7);}',
-        '#__dc .dc-header{padding:14px 16px 10px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #2a2a2a;cursor:grab;}',
+        '@import url("https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");',
+
+        // Tooltip styles — rendered at body level to prevent clipping
+        '.dc-tip{position:fixed;z-index:9999999;pointer-events:none;opacity:0;transition:opacity .18s ease;max-width:230px;}',
+        '.dc-tip.visible{opacity:1;}',
+        '.dc-tip-inner{background:#1a0608;border:1px solid #6b0f18;border-radius:6px;padding:7px 11px;font-family:"Rajdhani",sans-serif;font-size:12px;font-weight:500;color:#c8a0a5;line-height:1.5;letter-spacing:.3px;box-shadow:0 4px 24px rgba(100,0,15,.55);}',
+
+        // Panel
+        '#__dc{position:fixed;top:20px;right:20px;width:360px;background:#0d0203;color:#d4aaad;border:1px solid #3a0a10;border-radius:12px;z-index:999999;font-family:"Rajdhani",sans-serif;font-size:13px;box-shadow:0 8px 40px rgba(120,0,20,.6),0 0 0 1px rgba(180,20,40,.08);overflow:visible;}',
+
+        // Subtle top glow line
+        '#__dc::before{content:"";position:absolute;top:0;left:40px;right:40px;height:1px;background:linear-gradient(90deg,transparent,#8b1a24,transparent);border-radius:0;}',
+
+        // Header
+        '#__dc .dc-header{padding:14px 16px 10px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1f0508;cursor:grab;}',
         '#__dc .dc-header:active{cursor:grabbing;}',
-        '#__dc .dc-title{font-size:14px;font-weight:600;color:#fff;letter-spacing:.5px;}',
+        '#__dc .dc-title{font-size:15px;font-weight:700;color:#e8c0c5;letter-spacing:1.5px;text-transform:uppercase;}',
+        '#__dc .dc-title span{color:#8b1a24;font-weight:400;}',
         '#__dc .dc-header-btns{display:flex;gap:6px;align-items:center;}',
-        '#__dc .ic-btn{background:none;border:none;color:#666;cursor:pointer;font-size:13px;padding:2px 5px;border-radius:4px;}',
-        '#__dc .ic-btn:hover{color:#ccc;background:#222;}',
-        '#__dc .tabs{display:flex;border-bottom:1px solid #2a2a2a;}',
-        '#__dc .tab{flex:1;padding:8px 4px;text-align:center;font-size:11px;color:#666;cursor:pointer;border:none;background:none;transition:color .15s;}',
-        '#__dc .tab:hover{color:#aaa;}',
-        '#__dc .tab.active{color:#6af;border-bottom:2px solid #6af;}',
-        '#__dc .tab-body{padding:14px 16px;}',
+        '#__dc .ic-btn{background:none;border:1px solid transparent;color:#4a1a1e;cursor:pointer;font-size:12px;padding:3px 7px;border-radius:4px;transition:all .15s;}',
+        '#__dc .ic-btn:hover{color:#c0606a;border-color:#3a0a10;background:#1a0305;}',
+
+        // Tabs
+        '#__dc .tabs{display:flex;border-bottom:1px solid #1f0508;background:#0a0102;}',
+        '#__dc .tab{flex:1;padding:9px 4px;text-align:center;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:#3a1a1e;cursor:pointer;border:none;background:none;transition:color .15s;position:relative;}',
+        '#__dc .tab:hover{color:#7a404a;}',
+        '#__dc .tab.active{color:#c0606a;}',
+        '#__dc .tab.active::after{content:"";position:absolute;bottom:0;left:20%;right:20%;height:2px;background:linear-gradient(90deg,transparent,#8b1a24,transparent);}',
+        '#__dc .tab-body{padding:14px 16px 10px;}',
         '#__dc .tab-pane{display:none;}',
         '#__dc .tab-pane.active{display:block;}',
-        '#__dc label{display:block;font-size:11px;color:#888;margin:10px 0 4px;}',
-        '#__dc input[type=text],#__dc input[type=number]{width:100%;background:#1a1a1a;color:#fff;border:1px solid #2e2e2e;border-radius:5px;padding:6px 8px;font-size:13px;box-sizing:border-box;outline:none;}',
-        '#__dc input[type=text]:focus,#__dc input[type=number]:focus{border-color:#3a5a8a;}',
-        '#__dc input[type=range]{width:100%;accent-color:#6af;margin:4px 0;}',
+
+        // Labels & inputs
+        '#__dc label{display:block;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#5a2a2e;margin:10px 0 4px;}',
+        '#__dc input[type=text],#__dc input[type=number]{width:100%;background:#120304;color:#e8c0c5;border:1px solid #2a0a0e;border-radius:6px;padding:7px 10px;font-size:13px;font-family:"JetBrains Mono",monospace;box-sizing:border-box;outline:none;transition:border-color .15s,box-shadow .15s;}',
+        '#__dc input[type=text]:focus,#__dc input[type=number]:focus{border-color:#6b0f18;box-shadow:0 0 0 2px rgba(107,15,24,.25);}',
+        '#__dc input[type=text]::placeholder,#__dc input[type=number]::placeholder{color:#2e1215;font-family:"JetBrains Mono",monospace;}',
+        '#__dc input[type=range]{width:100%;accent-color:#8b1a24;margin:4px 0;cursor:pointer;}',
+
+        // Grid
         '#__dc .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}',
         '#__dc .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}',
-        '#__dc .btn-primary{width:100%;margin-top:10px;padding:9px;background:#2a4a8a;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;}',
-        '#__dc .btn-primary:hover{background:#3a5aaa;}',
-        '#__dc .btn-stop{width:100%;margin-top:6px;padding:7px;background:#2a1010;color:#f88;border:1px solid #4a2020;border-radius:6px;cursor:pointer;font-size:12px;display:none;}',
-        '#__dc .btn-stop:hover{background:#3a1818;}',
-        '#__dc .btn-sm{padding:5px 10px;font-size:11px;border:1px solid #333;background:#1a1a1a;color:#aaa;border-radius:5px;cursor:pointer;}',
-        '#__dc .btn-sm:hover{border-color:#6af;color:#6af;}',
-        '#__dc .badge{display:inline-block;padding:3px 8px;border-radius:4px;font-size:11px;margin-bottom:6px;}',
-        '#__dc .ok{background:#152515;color:#5d5;}',
-        '#__dc .warn{background:#2a2000;color:#ca4;}',
-        '#__dc .err{background:#2a0f0f;color:#d66;}',
-        '#__dc .info{background:#0f1e30;color:#6af;}',
-        '#__dc .hint{font-size:10px;color:#444;margin-top:3px;}',
-        '#__dc .res-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #1e1e1e;}',
+
+        // Buttons
+        '#__dc .btn-primary{width:100%;margin-top:12px;padding:10px;background:linear-gradient(135deg,#5a0e16,#8b1a24);color:#f0d0d4;border:1px solid #6b0f18;border-radius:7px;cursor:pointer;font-size:12px;font-weight:700;font-family:"Rajdhani",sans-serif;letter-spacing:1.5px;text-transform:uppercase;transition:all .2s;}',
+        '#__dc .btn-primary:hover{background:linear-gradient(135deg,#6b1020,#a02030);box-shadow:0 0 16px rgba(139,26,36,.4);}',
+        '#__dc .btn-stop{width:100%;margin-top:6px;padding:8px;background:#120304;color:#804040;border:1px solid #2a0a0e;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;font-family:"Rajdhani",sans-serif;letter-spacing:1px;text-transform:uppercase;display:none;transition:all .15s;}',
+        '#__dc .btn-stop:hover{border-color:#4a1a1e;color:#c06060;}',
+        '#__dc .btn-sm{padding:5px 10px;font-size:11px;font-weight:600;letter-spacing:.5px;border:1px solid #2a0a0e;background:#120304;color:#5a2a2e;border-radius:5px;cursor:pointer;font-family:"Rajdhani",sans-serif;transition:all .15s;}',
+        '#__dc .btn-sm:hover{border-color:#6b0f18;color:#c0606a;}',
+
+        // Badges
+        '#__dc .badge{display:inline-block;padding:4px 10px;border-radius:4px;font-size:11px;font-weight:600;letter-spacing:.5px;margin-bottom:6px;font-family:"Rajdhani",sans-serif;}',
+        '#__dc .ok{background:#0a1f0a;color:#4a9a4a;border:1px solid #1a3a1a;}',
+        '#__dc .warn{background:#1f1500;color:#b08020;border:1px solid #3a2800;}',
+        '#__dc .err{background:#1f0508;color:#c04040;border:1px solid #3a0a10;}',
+        '#__dc .info{background:#05101f;color:#4080b0;border:1px solid #0a2a40;}',
+
+        // Hint
+        '#__dc .hint{font-size:10px;color:#2e1215;margin-top:3px;letter-spacing:.3px;}',
+
+        // Results
+        '#__dc .res-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #150405;}',
         '#__dc .res-row:last-child{border:none;}',
-        '#__dc .res-lbl{color:#777;font-size:12px;}',
-        '#__dc .res-val{font-family:monospace;font-weight:500;font-size:12px;}',
-        '#__dc .cd-box{text-align:center;font-size:28px;font-family:monospace;font-weight:700;padding:10px;background:#0a0a0a;border:1px solid #222;border-radius:6px;margin:10px 0 2px;letter-spacing:2px;transition:color .3s;}',
-        '#__dc .cd-lbl{font-size:10px;color:#444;text-align:center;margin-bottom:8px;}',
-        '#__dc .section-title{font-size:11px;color:#555;text-transform:uppercase;letter-spacing:.8px;margin:12px 0 8px;border-bottom:1px solid #1e1e1e;padding-bottom:4px;}',
+        '#__dc .res-lbl{color:#4a2a2e;font-size:12px;font-weight:600;letter-spacing:.5px;}',
+        '#__dc .res-val{font-family:"JetBrains Mono",monospace;font-weight:500;font-size:12px;color:#c0a0a5;}',
+
+        // Countdown
+        '#__dc .cd-box{text-align:center;font-size:30px;font-family:"JetBrains Mono",monospace;font-weight:500;padding:12px;background:#0a0102;border:1px solid #1f0508;border-radius:8px;margin:10px 0 2px;letter-spacing:3px;transition:color .3s,text-shadow .3s;}',
+        '#__dc .cd-lbl{font-size:10px;color:#3a1a1e;text-align:center;margin-bottom:8px;letter-spacing:1px;text-transform:uppercase;font-weight:600;}',
+
+        // Section titles
+        '#__dc .section-title{font-size:10px;color:#4a1a1e;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin:14px 0 8px;border-bottom:1px solid #1a0508;padding-bottom:5px;}',
+
+        // Checkboxes
         '#__dc .cb-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}',
-        '#__dc .cb-row input[type=checkbox]{width:auto;margin:0;accent-color:#6af;cursor:pointer;}',
-        '#__dc .cb-row label{margin:0;color:#bbb;font-size:12px;cursor:pointer;}',
+        '#__dc .cb-row input[type=checkbox]{width:auto;margin:0;accent-color:#8b1a24;cursor:pointer;}',
+        '#__dc .cb-row label{margin:0;color:#7a5055;font-size:12px;font-weight:600;letter-spacing:.3px;cursor:pointer;}',
+
+        // Range rows
         '#__dc .range-row{display:flex;align-items:center;gap:8px;}',
-        '#__dc .range-row span{font-size:11px;color:#6af;min-width:36px;text-align:right;font-family:monospace;}',
-        '#__dc .hist-row{font-size:11px;padding:6px 0;border-bottom:1px solid #1a1a1a;color:#888;display:flex;justify-content:space-between;align-items:center;}',
+        '#__dc .range-row span{font-size:11px;color:#8b1a24;min-width:44px;text-align:right;font-family:"JetBrains Mono",monospace;}',
+
+        // History
+        '#__dc .hist-row{font-size:11px;padding:7px 0;border-bottom:1px solid #150405;color:#5a3035;display:flex;justify-content:space-between;align-items:center;}',
         '#__dc .hist-row:last-child{border:none;}',
-        '#__dc .hist-load{font-size:10px;color:#6af;cursor:pointer;text-decoration:none;}',
-        '#__dc .hist-load:hover{color:#8cf;}',
-        '#__dc .travel-result{background:#0d1a0d;border:1px solid #1a3a1a;border-radius:6px;padding:10px;margin-top:10px;font-family:monospace;font-size:13px;color:#4c4;text-align:center;display:none;}',
-        '#__dc .alert-log{font-size:10px;color:#555;margin-top:8px;max-height:60px;overflow-y:auto;font-family:monospace;}',
+        '#__dc .hist-load{font-size:10px;font-weight:700;letter-spacing:.5px;color:#6b0f18;cursor:pointer;text-transform:uppercase;transition:color .15s;}',
+        '#__dc .hist-load:hover{color:#c0606a;}',
+
+        // Travel result
+        '#__dc .travel-result{background:#0a0102;border:1px solid #2a0a0e;border-radius:8px;padding:12px;margin-top:10px;font-family:"JetBrains Mono",monospace;font-size:13px;color:#8b1a24;text-align:center;display:none;}',
+
+        // Alert log
+        '#__dc .alert-log{font-size:10px;color:#3a1a1e;margin-top:8px;max-height:60px;overflow-y:auto;font-family:"JetBrains Mono",monospace;}',
         '#__dc .alert-log div{padding:1px 0;}',
-        '#__dc .alert-log .al-warn{color:#ca4;}',
-        '#__dc .alert-log .al-send{color:#6af;}',
-        '#__dc .alert-log .al-cancel{color:#fa6;}',
-        '#__dc .scrollbar::-webkit-scrollbar{width:4px;}',
-        '#__dc .scrollbar::-webkit-scrollbar-thumb{background:#333;border-radius:2px;}'
+        '#__dc .alert-log .al-warn{color:#b08020;}',
+        '#__dc .alert-log .al-send{color:#6b8030;}',
+        '#__dc .alert-log .al-cancel{color:#8b3a1a;}',
+        '#__dc .scrollbar::-webkit-scrollbar{width:3px;}',
+        '#__dc .scrollbar::-webkit-scrollbar-thumb{background:#2a0a0e;border-radius:2px;}',
+
+        // Select
+        '#__dc select{width:100%;background:#120304;color:#c0a0a5;border:1px solid #2a0a0e;border-radius:6px;padding:7px 10px;font-size:12px;font-family:"Rajdhani",sans-serif;font-weight:500;outline:none;cursor:pointer;transition:border-color .15s;}',
+        '#__dc select:focus{border-color:#6b0f18;}',
+
+        // Footer signature
+        '#__dc .dc-footer{text-align:center;padding:8px 0 10px;font-size:10px;color:#2a1012;letter-spacing:.5px;font-weight:500;border-top:1px solid #150405;margin-top:4px;}',
+        '#__dc .dc-footer span{color:#3a1518;}',
     ].join('');
     document.head.appendChild(s);
 
-    // ─── BUILD PANEL ─────────────────────────────────────────────────────────────
+    // ─── TOOLTIP ENGINE (body-level, no clipping) ─────────────────────────────
+    var tipEl = document.createElement('div');
+    tipEl.className = 'dc-tip';
+    var tipInner = document.createElement('div');
+    tipInner.className = 'dc-tip-inner';
+    tipEl.appendChild(tipInner);
+    document.body.appendChild(tipEl);
+
+    var tipTimer = null;
+    function showTip(e, text) {
+        clearTimeout(tipTimer);
+        tipInner.textContent = text;
+        positionTip(e);
+        tipEl.classList.add('visible');
+    }
+    function positionTip(e) {
+        var x = e.clientX + 14, y = e.clientY - 10;
+        var pw = tipEl.offsetWidth || 230, ph = tipEl.offsetHeight || 60;
+        var vw = window.innerWidth, vh = window.innerHeight;
+        if (x + pw > vw - 10) x = e.clientX - pw - 10;
+        if (y + ph > vh - 10) y = vh - ph - 10;
+        if (x < 8) x = 8;
+        if (y < 8) y = 8;
+        tipEl.style.left = x + 'px';
+        tipEl.style.top  = y + 'px';
+    }
+    function hideTip() {
+        clearTimeout(tipTimer);
+        tipEl.classList.remove('visible');
+    }
+    function addTip(el, text) {
+        el.addEventListener('mouseenter', function(e){ showTip(e, text); });
+        el.addEventListener('mousemove',  function(e){ positionTip(e); });
+        el.addEventListener('mouseleave', hideTip);
+        el.addEventListener('focus',      function(e){ showTip(e, text); });
+        el.addEventListener('blur',       hideTip);
+    }
+
+    // ─── BUILD PANEL ─────────────────────────────────────────────────────────
     var panel = document.createElement('div');
     panel.id = '__dc';
+    panel.id = '__dodge_calc'; // dual-ID trick: keep guard working
+
+    // Fix: set both IDs
+    panel.setAttribute('id', '__dodge_calc');
+    var innerDiv = document.createElement('div');
+    innerDiv.id = '__dc';
+    // Actually just set one correct ID and update guard
+    panel.id = '__dc';
+    // We add a marker element for the guard
+    var guard = document.createElement('span');
+    guard.id = '__dodge_calc';
+    guard.style.display = 'none';
+    panel.appendChild(guard);
 
     // Header
     var header = document.createElement('div'); header.className = 'dc-header';
-    var titleEl = document.createElement('span'); titleEl.className = 'dc-title'; titleEl.textContent = 'Dodge kalkulačka';
+    var titleEl = document.createElement('span'); titleEl.className = 'dc-title';
+    titleEl.innerHTML = 'DODGE <span>/ KALKULAČKA</span>';
     var hBtns = document.createElement('div'); hBtns.className = 'dc-header-btns';
     var minimizeBtn = document.createElement('button'); minimizeBtn.className = 'ic-btn'; minimizeBtn.textContent = '▼'; minimizeBtn.title = 'Minimalizovat';
     var closeBtn = document.createElement('button'); closeBtn.className = 'ic-btn'; closeBtn.textContent = '✕'; closeBtn.title = 'Zavřít';
-    closeBtn.onclick = function () { stopAlerts(); panel.remove(); };
+    closeBtn.onclick = function () { stopAlerts(); panel.remove(); tipEl.remove(); };
     hBtns.appendChild(minimizeBtn); hBtns.appendChild(closeBtn);
     header.appendChild(titleEl); header.appendChild(hBtns);
     panel.appendChild(header);
@@ -98,12 +201,18 @@
         panes.push(p);
     });
     panel.appendChild(tabBar);
-    tabBody.appendChild(panes[0]); tabBody.appendChild(panes[1]); tabBody.appendChild(panes[2]); tabBody.appendChild(panes[3]);
+    tabBody.appendChild(panes[0]); tabBody.appendChild(panes[1]);
+    tabBody.appendChild(panes[2]); tabBody.appendChild(panes[3]);
     panel.appendChild(tabBody);
+
+    // Footer signature
+    var footer = document.createElement('div'); footer.className = 'dc-footer';
+    footer.innerHTML = 'Powered by <span>TheBrain🧠</span>';
+    panel.appendChild(footer);
 
     document.body.appendChild(panel);
 
-    // ─── TAB 0: DODGE ────────────────────────────────────────────────────────────
+    // ─── TAB 0: DODGE ────────────────────────────────────────────────────────
     var t0 = panes[0];
 
     function field(lbl, id, ph, hint) {
@@ -116,17 +225,23 @@
     }
 
     var r2 = document.createElement('div'); r2.className = 'row2';
-    r2.appendChild(field('Dopad útoku (HH:mm:ss:ms)', '__dc_impact', '16:43:18:270', ''));
-    r2.appendChild(field('Návrat vojska (HH:mm:ss:ms)', '__dc_return', '16:43:18:370', 'Kdy chceš mít vojsko zpátky'));
+    var impField = field('Dopad útoku', '__dc_impact', '16:43:18:270', 'Formát HH:mm:ss:ms');
+    var retField = field('Návrat vojska', '__dc_return', '16:43:18:370', 'Kdy chceš mít vojsko zpátky');
+    r2.appendChild(impField);
+    r2.appendChild(retField);
     t0.appendChild(r2);
+
+    addTip(impField.querySelector('input'), 'Čas dopadu nepřátelského útoku.\nFormát: HH:mm:ss:ms (např. 16:43:18:270)\nNechej prázdné pokud neznáš.');
+    addTip(retField.querySelector('input'), 'Čas, kdy chceš mít vojsko zpět v pevnosti.\nFormát: HH:mm:ss:ms\nDůležité: Musí být pozdější než dopad útoku.');
 
     var lc = document.createElement('label'); lc.textContent = 'Zrušit po X sekundách (max 600)';
     var ic = document.createElement('input'); ic.type = 'number'; ic.id = '__dc_cancel'; ic.value = '420'; ic.min = '1'; ic.max = '600';
     var hc = document.createElement('div'); hc.className = 'hint'; hc.textContent = 'Vojsko pryč 2× tento čas';
     t0.appendChild(lc); t0.appendChild(ic); t0.appendChild(hc);
+    addTip(ic, 'Kolik sekund po odeslání dodge zrušit.\nMax 600 sekund (10 minut).\nVojsko bude pryč přibližně 2× tento čas.');
 
     // Discord
-    var dTitle = document.createElement('div'); dTitle.className = 'section-title'; dTitle.textContent = 'Discord';
+    var dTitle = document.createElement('div'); dTitle.className = 'section-title'; dTitle.textContent = 'Discord notifikace';
     t0.appendChild(dTitle);
 
     function cbRow(id, txt, checked) {
@@ -135,13 +250,18 @@
         var l = document.createElement('label'); l.htmlFor = id; l.textContent = txt;
         row.appendChild(cb); row.appendChild(l); return row;
     }
-    t0.appendChild(cbRow('__dc_discordon', 'Posílat Discord zprávy'));
+    var discRow = cbRow('__dc_discordon', 'Posílat Discord zprávy');
+    t0.appendChild(discRow);
+    addTip(discRow, 'Zapne odesílání automatických upozornění na Discord webhook.\nZprávy se posílají před odesláním a zrušením dodge.');
+
     var whWrap = document.createElement('div'); whWrap.id = '__dc_whwrap';
     var whLbl = document.createElement('label'); whLbl.textContent = 'Webhook URL';
     var whInp = document.createElement('input'); whInp.type = 'text'; whInp.id = '__dc_webhook'; whInp.placeholder = 'https://discord.com/api/webhooks/...';
-    var whHint = document.createElement('div'); whHint.className = 'hint'; whHint.textContent = 'URL se uloží automaticky';
+    var whHint = document.createElement('div'); whHint.className = 'hint'; whHint.textContent = 'URL se uloží automaticky do localStorage';
     whWrap.appendChild(whLbl); whWrap.appendChild(whInp); whWrap.appendChild(whHint);
     t0.appendChild(whWrap);
+    addTip(whInp, 'Discord Webhook URL pro odesílání zpráv.\nNajdeš ji v Nastavení kanálu → Integrace → Webhooky.\nUkládá se automaticky.');
+
     try { var sw = localStorage.getItem('__dodge_wh'); if(sw) whInp.value = sw; } catch(e){}
     document.getElementById('__dc_discordon').addEventListener('change', function(){
         whWrap.style.display = this.checked ? '' : 'none';
@@ -149,22 +269,26 @@
     whWrap.style.display = document.getElementById('__dc_discordon').checked ? '' : 'none';
 
     // Calc button
-    var calcBtn = document.createElement('button'); calcBtn.className = 'btn-primary'; calcBtn.textContent = 'Vypočítat a spustit alerty';
+    var calcBtn = document.createElement('button'); calcBtn.className = 'btn-primary'; calcBtn.textContent = '▶ VYPOČÍTAT A SPUSTIT';
     calcBtn.onclick = runCalc;
     t0.appendChild(calcBtn);
+    addTip(calcBtn, 'Vypočítá optimální čas odeslání dodge a spustí časovač.\nBudeš upozorněn zvukem a/nebo Discord zprávou.');
 
-    var stopBtnEl = document.createElement('button'); stopBtnEl.className = 'btn-stop'; stopBtnEl.id = '__dc_stopbtn'; stopBtnEl.textContent = '⏹ Zastavit alerty';
+    var stopBtnEl = document.createElement('button'); stopBtnEl.className = 'btn-stop'; stopBtnEl.id = '__dc_stopbtn'; stopBtnEl.textContent = '⏹  ZASTAVIT ALERTY';
     stopBtnEl.onclick = function(){ stopAlerts(); resArea.innerHTML=''; stopBtnEl.style.display='none'; };
     t0.appendChild(stopBtnEl);
+    addTip(stopBtnEl, 'Zastaví všechny běžící alerty a resetuje časovač.\nVojsko nebude automaticky posláno zpět.');
 
     var resArea = document.createElement('div'); resArea.id = '__dc_res';
     t0.appendChild(resArea);
 
-    // ─── TAB 1: SOUND SETTINGS ───────────────────────────────────────────────────
+    // ─── TAB 1: SOUND ────────────────────────────────────────────────────────
     var t1 = panes[1];
     var sndTitle = document.createElement('div'); sndTitle.className = 'section-title'; sndTitle.textContent = 'Zvukové alerty';
     t1.appendChild(sndTitle);
-    t1.appendChild(cbRow('__dc_sound', 'Zapnout zvuk', true));
+    var soundRow = cbRow('__dc_sound', 'Zapnout zvuk', true);
+    t1.appendChild(soundRow);
+    addTip(soundRow, 'Zapne/vypne zvukové upozornění při alertu.\nZvuk se přehraje před odesláním a zrušením dodge.');
 
     function sliderRow(lbl, id, min, max, val, unit, step) {
         var wrap = document.createElement('div');
@@ -180,94 +304,103 @@
 
     var alertsTitle = document.createElement('div'); alertsTitle.className = 'section-title'; alertsTitle.textContent = 'Časy upozornění';
     t1.appendChild(alertsTitle);
-    t1.appendChild(sliderRow('Upozornit X minut před odesláním', '__dc_alert1', 1, 10, 3, ' min'));
-    t1.appendChild(sliderRow('Upozornit X minut před zrušením', '__dc_alert2', 1, 10, 3, ' min'));
+    var a1row = sliderRow('Upozornit X minut před odesláním', '__dc_alert1', 1, 10, 3, ' min');
+    var a2row = sliderRow('Upozornit X minut před zrušením', '__dc_alert2', 1, 10, 3, ' min');
+    t1.appendChild(a1row);
+    t1.appendChild(a2row);
+    addTip(a1row, 'Kolik minut před časem odeslání dodge dostaneš první upozornění.');
+    addTip(a2row, 'Kolik minut před časem zrušení dodge dostaneš upozornění ke zrušení.');
 
     var toneTitle = document.createElement('div'); toneTitle.className = 'section-title'; toneTitle.textContent = 'Tón alertu';
     t1.appendChild(toneTitle);
-    t1.appendChild(sliderRow('Frekvence (Hz)', '__dc_freq', 200, 2000, 880, ' Hz', 10));
-    t1.appendChild(sliderRow('Hlasitost', '__dc_vol', 1, 20, 8, '%'));
+    var freqRow = sliderRow('Frekvence (Hz)', '__dc_freq', 200, 2000, 880, ' Hz', 10);
+    var volRow  = sliderRow('Hlasitost', '__dc_vol', 1, 20, 8, '%');
+    t1.appendChild(freqRow);
+    t1.appendChild(volRow);
+    addTip(freqRow, 'Výška tónu alertu v Hz.\nNižší = hlubší, vyšší = pronikavější.');
+    addTip(volRow,  'Hlasitost alertu v procentech.\nDoporučeno: 5–12% pro nenápadný zvuk.');
 
     var waveTitle = document.createElement('div'); waveTitle.className = 'section-title'; waveTitle.textContent = 'Tvar vlny';
     t1.appendChild(waveTitle);
-    var waveWrap = document.createElement('div'); waveWrap.className = 'row2'; waveWrap.style.marginBottom = '10px';
+    var waveWrap = document.createElement('div'); waveWrap.className = 'row2'; waveWrap.style.marginBottom = '10px'; waveWrap.style.gap='8px';
     ['sine','square','sawtooth','triangle'].forEach(function(w){
         var btn = document.createElement('button'); btn.className = 'btn-sm'; btn.textContent = w; btn.id = '__dc_wave_'+w;
         btn.onclick = function(){
             document.querySelectorAll('[id^=__dc_wave_]').forEach(function(b){b.style.borderColor='';b.style.color='';});
-            btn.style.borderColor='#6af'; btn.style.color='#6af';
+            btn.style.borderColor='#8b1a24'; btn.style.color='#c0606a';
             try{ localStorage.setItem('__dodge_wave', w); }catch(e){}
             testPreview();
         };
         waveWrap.appendChild(btn);
     });
     t1.appendChild(waveWrap);
+    addTip(waveWrap, 'Tvar zvukové vlny.\nsine = jemný, square = ostrý, sawtooth = řezavý, triangle = střední.\nKliknutím vybereš a ihned přehraješ náhled.');
 
-    var previewBtn = document.createElement('button'); previewBtn.className = 'btn-sm'; previewBtn.textContent = '▶ Přehrát náhled'; previewBtn.style.width='100%'; previewBtn.style.marginTop='4px';
+    var previewBtn = document.createElement('button'); previewBtn.className = 'btn-primary'; previewBtn.style.marginTop='6px'; previewBtn.textContent = '▶  PŘEHRÁT NÁHLED';
     previewBtn.onclick = testPreview;
     t1.appendChild(previewBtn);
+    addTip(previewBtn, 'Přehraje náhled zvuku s aktuálním nastavením frekvence, hlasitosti a tvaru vlny.');
 
-    // ─── TAB 2: TRAVEL CALC ─────────────────────────────────────────────────────
+    // ─── TAB 2: TRAVEL CALC ──────────────────────────────────────────────────
     var t2 = panes[2];
     var travTitle = document.createElement('div'); travTitle.className = 'section-title'; travTitle.textContent = 'Cestovní kalkulátor';
-    var travHint = document.createElement('div'); travHint.className = 'hint'; travHint.style.marginBottom='8px'; travHint.textContent = 'Spočítá čas cesty = pomůže ti naplánovat backtime ručně';
+    var travHint = document.createElement('div'); travHint.className = 'hint'; travHint.style.marginBottom='8px'; travHint.textContent = 'Spočítá čas cesty → pomoct plánovat backtime ručně';
     t2.appendChild(travTitle); t2.appendChild(travHint);
 
     var r3 = document.createElement('div'); r3.className = 'row2';
-    r3.appendChild(field('Koordináty od', '__dc_from', '444|465', ''));
-    r3.appendChild(field('Koordináty cíl', '__dc_to', '417|577', ''));
+    var fromField = field('Koordináty od', '__dc_from', '444|465', '');
+    var toField   = field('Koordináty cíl', '__dc_to', '417|577', '');
+    r3.appendChild(fromField);
+    r3.appendChild(toField);
     t2.appendChild(r3);
+    addTip(fromField.querySelector('input'), 'Koordináty výchozí pevnosti.\nFormát: X|Y (např. 444|465)\nNajdeš je v mapě po kliknutí na pevnost.');
+    addTip(toField.querySelector('input'),   'Koordináty cílové pevnosti.\nFormát: X|Y (např. 417|577)');
 
-    var spLbl = document.createElement('label'); spLbl.textContent = 'Rychlost jednotky (min/pole)';
+    var spLbl = document.createElement('label'); spLbl.textContent = 'Rychlost jednotky';
     var spWrap = document.createElement('div'); spWrap.className = 'row2';
-
     var unitSel = document.createElement('select'); unitSel.id = '__dc_unit';
-    unitSel.style.cssText = 'width:100%;background:#1a1a1a;color:#fff;border:1px solid #2e2e2e;border-radius:5px;padding:6px 8px;font-size:12px;';
     var units = [
-        ['Útočník pěší (spear)', 18],
-        ['Meč', 22],
-        ['Sekera', 18],
-        ['Průzkumník', 9],
-        ['Lehká jízda', 10],
-        ['Těžká jízda', 11],
-        ['Beranidlo', 30],
-        ['Katapult', 30],
-        ['Šlechtic', 35],
-        ['Vlastní...', 0]
+        ['Útočník pěší (spear)', 18],['Meč', 22],['Sekera', 18],
+        ['Průzkumník', 9],['Lehká jízda', 10],['Těžká jízda', 11],
+        ['Beranidlo', 30],['Katapult', 30],['Šlechtic', 35],['Vlastní...', 0]
     ];
     units.forEach(function(u){
         var o = document.createElement('option'); o.textContent = u[0]; o.value = u[1];
         unitSel.appendChild(o);
     });
+    addTip(unitSel, 'Vyber typ jednotky nebo "Vlastní..." pro manuální zadání rychlosti (min/pole).');
     var customSpeedWrap = document.createElement('div');
     var customSpeedInp = document.createElement('input'); customSpeedInp.type='number'; customSpeedInp.id='__dc_custom_speed'; customSpeedInp.placeholder='min/pole'; customSpeedInp.min='1'; customSpeedInp.style.display='none';
+    addTip(customSpeedInp, 'Zadej vlastní rychlost v minutách na jedno pole.');
     unitSel.onchange = function(){ customSpeedInp.style.display = this.value === '0' ? '' : 'none'; };
     var leftCol = document.createElement('div'); leftCol.appendChild(unitSel);
     var rightCol = document.createElement('div'); rightCol.appendChild(customSpeedInp);
     spWrap.appendChild(leftCol); spWrap.appendChild(rightCol);
     t2.appendChild(spLbl); t2.appendChild(spWrap);
 
-    var travBtn = document.createElement('button'); travBtn.className = 'btn-primary'; travBtn.textContent = 'Spočítat cestu';
+    var travBtn = document.createElement('button'); travBtn.className = 'btn-primary'; travBtn.textContent = '▶ SPOČÍTAT CESTU';
     travBtn.onclick = calcTravel;
     t2.appendChild(travBtn);
+    addTip(travBtn, 'Vypočítá vzdálenost a čas cesty mezi zadanými koordináty pro vybranou jednotku.');
 
     var travResult = document.createElement('div'); travResult.className = 'travel-result'; travResult.id = '__dc_travres';
     t2.appendChild(travResult);
 
-    // ─── TAB 3: HISTORY ─────────────────────────────────────────────────────────
+    // ─── TAB 3: HISTORY ──────────────────────────────────────────────────────
     var t3 = panes[3];
     var histTitle = document.createElement('div'); histTitle.className = 'section-title'; histTitle.textContent = 'Posledních 5 operací';
     t3.appendChild(histTitle);
     var histList = document.createElement('div'); histList.id = '__dc_histlist';
     t3.appendChild(histList);
-    var clearHistBtn = document.createElement('button'); clearHistBtn.className = 'btn-sm'; clearHistBtn.textContent = '🗑 Smazat historii'; clearHistBtn.style.marginTop='10px';
+    var clearHistBtn = document.createElement('button'); clearHistBtn.className = 'btn-sm'; clearHistBtn.textContent = '⌫  Smazat historii'; clearHistBtn.style.marginTop='12px';
     clearHistBtn.onclick = function(){ try{localStorage.removeItem('__dodge_hist');}catch(e){} renderHistory(); };
     t3.appendChild(clearHistBtn);
+    addTip(clearHistBtn, 'Smaže všechny uložené operace z historie.\nTato akce je nevratná.');
     renderHistory();
 
-    // ─── MINIMIZE ───────────────────────────────────────────────────────────────
+    // ─── MINIMIZE ────────────────────────────────────────────────────────────
     var isMin = false;
-    var collapseEls = [tabBar, tabBody];
+    var collapseEls = [tabBar, tabBody, footer];
     minimizeBtn.onclick = function(e) {
         e.stopPropagation();
         isMin = !isMin;
@@ -275,7 +408,7 @@
         minimizeBtn.textContent = isMin ? '▲' : '▼';
     };
 
-    // ─── DRAG ────────────────────────────────────────────────────────────────────
+    // ─── DRAG ────────────────────────────────────────────────────────────────
     var dragging=false, ddx, ddy;
     header.addEventListener('mousedown', function(e){
         if (e.target===closeBtn||e.target===minimizeBtn) return;
@@ -287,7 +420,7 @@
     });
     document.addEventListener('mouseup', function(){ dragging=false; });
 
-    // ─── LOAD/SAVE SETTINGS ──────────────────────────────────────────────────────
+    // ─── SETTINGS ────────────────────────────────────────────────────────────
     function loadSettings() {
         try {
             var cfg = JSON.parse(localStorage.getItem('__dodge_cfg')||'{}');
@@ -298,7 +431,7 @@
             if (cfg.wave) {
                 document.querySelectorAll('[id^=__dc_wave_]').forEach(function(b){b.style.borderColor='';b.style.color='';});
                 var wb = document.getElementById('__dc_wave_'+cfg.wave);
-                if (wb) { wb.style.borderColor='#6af'; wb.style.color='#6af'; }
+                if (wb) { wb.style.borderColor='#8b1a24'; wb.style.color='#c0606a'; }
             }
             if (cfg.sound===false) document.getElementById('__dc_sound').checked=false;
             if (cfg.discord===false) document.getElementById('__dc_discordon').checked=false;
@@ -321,10 +454,10 @@
     document.getElementById('__dc_discordon').addEventListener('change', saveSettings);
     loadSettings();
 
-    // ─── AUDIO ───────────────────────────────────────────────────────────────────
+    // ─── AUDIO ───────────────────────────────────────────────────────────────
     var actx = null;
     function getWave() {
-        var active = document.querySelector('[id^=__dc_wave_][style*="#6af"]');
+        var active = document.querySelector('[id^=__dc_wave_][style*="#c0606a"]');
         if (active) return active.id.replace('__dc_wave_','');
         try { return localStorage.getItem('__dodge_wave')||'sine'; } catch(e){ return 'sine'; }
     }
@@ -343,22 +476,17 @@
     }
     function getFreq(){ return parseInt(document.getElementById('__dc_freq').value)||880; }
     function getVol(){  return parseInt(document.getElementById('__dc_vol').value)||8; }
-
     function alertSound(type) {
         var f = getFreq(), v = getVol();
         if (type==='send') {
             beep(f,0.18,v); setTimeout(function(){beep(f,0.18,v);},230); setTimeout(function(){beep(f*1.25,0.32,v);},460);
         } else if (type==='cancel') {
             beep(f*0.75,0.18,v); setTimeout(function(){beep(f,0.25,v);},260);
-        } else {
-            beep(f,0.15,v);
-        }
+        } else { beep(f,0.15,v); }
     }
-    function testPreview() {
-        alertSound('send');
-    }
+    function testPreview() { alertSound('send'); }
 
-    // ─── DISCORD ─────────────────────────────────────────────────────────────────
+    // ─── DISCORD ─────────────────────────────────────────────────────────────
     function discord(msg) {
         var url = document.getElementById('__dc_webhook').value.trim();
         if (!url||!url.startsWith('https://discord.com/api/webhooks/')) return;
@@ -366,7 +494,7 @@
         fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:msg})}).catch(function(){});
     }
 
-    // ─── HELPERS ─────────────────────────────────────────────────────────────────
+    // ─── HELPERS ─────────────────────────────────────────────────────────────
     function parseT(str) {
         if (!str||!str.trim()) return null;
         var p=str.trim().split(/[:.]/);
@@ -407,7 +535,7 @@
         return p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds());
     }
 
-    // ─── HISTORY ─────────────────────────────────────────────────────────────────
+    // ─── HISTORY ─────────────────────────────────────────────────────────────
     function saveHistory(entry) {
         try {
             var h=JSON.parse(localStorage.getItem('__dodge_hist')||'[]');
@@ -422,12 +550,15 @@
         list.innerHTML='';
         try {
             var h=JSON.parse(localStorage.getItem('__dodge_hist')||'[]');
-            if (!h.length) { var e=document.createElement('div'); e.style.color='#444'; e.style.fontSize='11px'; e.textContent='Zatím žádná historie.'; list.appendChild(e); return; }
+            if (!h.length) {
+                var e=document.createElement('div'); e.style.color='#2a1012'; e.style.fontSize='11px';
+                e.style.letterSpacing='.5px'; e.textContent='Zatím žádná historie.'; list.appendChild(e); return;
+            }
             h.forEach(function(entry) {
                 var row=document.createElement('div'); row.className='hist-row';
                 var info=document.createElement('div');
-                info.innerHTML='<span style="color:#eee">'+entry.retStr+'</span> <span style="color:#555">cancel '+entry.cancelS+'s</span>';
-                var load=document.createElement('a'); load.className='hist-load'; load.textContent='Načíst';
+                info.innerHTML='<span style="color:#c0a0a5;font-family:\'JetBrains Mono\',monospace">'+entry.retStr+'</span> <span style="color:#3a1a1e;font-size:10px">cancel '+entry.cancelS+'s</span>';
+                var load=document.createElement('a'); load.className='hist-load'; load.textContent='NAČÍST';
                 load.onclick=function(){ loadFromHistory(entry); };
                 row.appendChild(info); row.appendChild(load);
                 list.appendChild(row);
@@ -438,43 +569,36 @@
         document.getElementById('__dc_return').value = entry.retStr||'';
         document.getElementById('__dc_impact').value = entry.impStr||'';
         document.getElementById('__dc_cancel').value = entry.cancelS||420;
-        // Switch to Dodge tab
         document.querySelectorAll('#__dc .tab')[0].click();
     }
 
-    // ─── TRAVEL CALC ─────────────────────────────────────────────────────────────
+    // ─── TRAVEL CALC ─────────────────────────────────────────────────────────
     function calcTravel() {
         var fromStr = document.getElementById('__dc_from').value.trim();
         var toStr   = document.getElementById('__dc_to').value.trim();
         var speed   = parseFloat(document.getElementById('__dc_unit').value);
         if (speed===0) speed = parseFloat(document.getElementById('__dc_custom_speed').value)||0;
-
         var res = document.getElementById('__dc_travres');
         res.style.display='';
-
-        if (!fromStr||!toStr) { res.textContent='Zadej obě koordináty'; res.style.color='#d66'; return; }
-        if (!speed||speed<=0) { res.textContent='Zadej rychlost'; res.style.color='#d66'; return; }
-
+        if (!fromStr||!toStr) { res.innerHTML='<span style="color:#c04040">Zadej obě koordináty</span>'; return; }
+        if (!speed||speed<=0) { res.innerHTML='<span style="color:#c04040">Zadej rychlost</span>'; return; }
         var fp=fromStr.split('|'), tp=toStr.split('|');
-        if (fp.length<2||tp.length<2) { res.textContent='Formát: XXX|YYY'; res.style.color='#d66'; return; }
+        if (fp.length<2||tp.length<2) { res.innerHTML='<span style="color:#c04040">Formát: XXX|YYY</span>'; return; }
         var dx=+fp[0]-+tp[0], dy=+fp[1]-+tp[1];
-        if (isNaN(dx)||isNaN(dy)) { res.textContent='Neplatné koordináty'; res.style.color='#d66'; return; }
-
+        if (isNaN(dx)||isNaN(dy)) { res.innerHTML='<span style="color:#c04040">Neplatné koordináty</span>'; return; }
         var dist = Math.sqrt(dx*dx+dy*dy);
         var travelMs = Math.round(dist * speed * 60 * 1000);
-        var totalMs = travelMs;
-        var h=Math.floor(totalMs/3600000), m=Math.floor((totalMs%3600000)/60000), s=Math.floor((totalMs%60000)/1000);
-
-        res.style.color='#4c4';
+        var h=Math.floor(travelMs/3600000), m=Math.floor((travelMs%3600000)/60000), s=Math.floor((travelMs%60000)/1000);
+        res.style.color='#8b1a24';
         res.innerHTML =
-            'Vzdálenost: <strong>'+dist.toFixed(2)+'</strong> polí<br>' +
-            'Čas cesty: <strong>'+h+'h '+m+'m '+s+'s</strong><br>' +
-            '<span style="color:#888;font-size:10px;">('+travelMs+'ms)</span>';
+            '<span style="color:#5a2a2e;font-size:10px;letter-spacing:1px;font-family:Rajdhani,sans-serif">VZDÁLENOST</span><br>' +
+            '<strong style="color:#c0606a;font-size:18px">' + dist.toFixed(2) + '</strong> <span style="color:#4a2a2e;font-size:11px">polí</span><br><br>' +
+            '<span style="color:#5a2a2e;font-size:10px;letter-spacing:1px;font-family:Rajdhani,sans-serif">ČAS CESTY</span><br>' +
+            '<strong style="color:#e8c0c5;font-size:16px">' + h + 'h ' + m + 'm ' + s + 's</strong>';
     }
 
-    // ─── ALERT LOOP ──────────────────────────────────────────────────────────────
+    // ─── ALERT LOOP ──────────────────────────────────────────────────────────
     var alertInterval=null, fired={}, calcData=null;
-
     function stopAlerts() {
         if(alertInterval){clearInterval(alertInterval);alertInterval=null;}
         fired={};
@@ -505,26 +629,21 @@
 
         calcData={sendTime:sendTime,cancelTime:cancelTime,retMs:retMs,impMs:impMs,cancelS:cancelS};
         fired={};
-
-        // Save to history
         saveHistory({retStr:retStr,impStr:impStr,cancelS:cancelS,ts:Date.now()});
 
-        // Static rows
-        var sec=document.createElement('div'); sec.style.borderTop='1px solid #1e1e1e'; sec.style.paddingTop='10px'; sec.style.marginTop='10px';
+        var sec=document.createElement('div'); sec.style.borderTop='1px solid #1a0508'; sec.style.paddingTop='10px'; sec.style.marginTop='10px';
         if (impMs) sec.appendChild(mkRow('Dopad útoku', fmtT(impMs),''));
-        sec.appendChild(mkRow('➤ Odeslat dodge', fmtT(sendTime),'#6af'));
-        sec.appendChild(mkRow('✕ Zrušit (za '+(cancelS/60).toFixed(1)+'min)', fmtT(cancelTime),'#fa6'));
-        sec.appendChild(mkRow('↩ Vojsko zpět', fmtT(retMs),'#4c4'));
+        sec.appendChild(mkRow('➤  Odeslat dodge', fmtT(sendTime),'#c0606a'));
+        sec.appendChild(mkRow('✕  Zrušit (za '+(cancelS/60).toFixed(1)+'min)', fmtT(cancelTime),'#b08020'));
+        sec.appendChild(mkRow('↩  Vojsko zpět', fmtT(retMs),'#4a9a4a'));
         sec.appendChild(mkRow('Vojsko pryč', (cancelS*2/60).toFixed(1)+' min',''));
         resArea.appendChild(sec);
 
-        // Countdown
         var cdBox=document.createElement('div'); cdBox.className='cd-box'; cdBox.id='__dc_cdbox'; cdBox.textContent='--:--:---';
         var cdLbl=document.createElement('div'); cdLbl.className='cd-lbl'; cdLbl.id='__dc_cdlbl'; cdLbl.textContent='čas do odeslání';
         resArea.appendChild(cdBox); resArea.appendChild(cdLbl);
 
-        // Alert log
-        var logLbl=document.createElement('div'); logLbl.className='hint'; logLbl.textContent='Log alertů:';
+        var logLbl=document.createElement('div'); logLbl.className='hint'; logLbl.style.marginTop='8px'; logLbl.textContent='— log alertů —';
         var logEl=document.createElement('div'); logEl.className='alert-log scrollbar'; logEl.id='__dc_alertlog';
         resArea.appendChild(logLbl); resArea.appendChild(logEl);
 
@@ -543,15 +662,18 @@
 
             if (toS>0) {
                 cdEl.textContent=fmtCnt(toS);
-                cdEl.style.color=toS<60000?'#fa6':(toS<=A1?'#ff4':'#6af');
+                cdEl.style.color = toS<60000 ? '#c04040' : (toS<=A1 ? '#b08020' : '#8b1a24');
+                cdEl.style.textShadow = toS<60000 ? '0 0 20px rgba(180,0,0,.5)' : 'none';
                 cdLEl.textContent='do odeslání dodge';
             } else if (toC>0) {
                 cdEl.textContent=fmtCnt(toC);
-                cdEl.style.color=toC<60000?'#f66':'#fa6';
+                cdEl.style.color = toC<60000 ? '#c04040' : '#7a5010';
+                cdEl.style.textShadow = toC<60000 ? '0 0 20px rgba(180,0,0,.5)' : 'none';
                 cdLEl.textContent='do zrušení dodge';
             } else {
                 cdEl.textContent='HOTOVO ✓';
-                cdEl.style.color='#4c4';
+                cdEl.style.color='#4a9a4a';
+                cdEl.style.textShadow='0 0 16px rgba(74,154,74,.4)';
                 cdLEl.textContent='vojsko na cestě zpět';
                 if(sndOn) alertSound('send');
                 addLog('Sekvence dokončena','al-send');
@@ -560,7 +682,6 @@
                 return;
             }
 
-            // Alert before SEND
             if (!fired.sA && toS>0 && toS<=A1) {
                 fired.sA=true;
                 if(sndOn) alertSound('send');
@@ -573,7 +694,6 @@
                 addLog('Alert: ZA 1 MINUTU odesílej!','al-warn');
                 if(discOn) discord('🚨 **Dodge** — za 1 minutu odešli útok!\n➤ Odeslat: `'+fmtT(calcData.sendTime)+'`');
             }
-            // Alert before CANCEL
             if (!fired.cA && toS<=0 && toC>0 && toC<=A2) {
                 fired.cA=true;
                 if(sndOn) alertSound('cancel');
