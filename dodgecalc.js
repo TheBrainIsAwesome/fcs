@@ -1,5 +1,5 @@
 // © 2026 TheBrain
-// Dodge Calculator v5 — Blood Red Edition (bez live odpočtu)
+// Dodge Calculator v5 
 
 (function () {
     if (document.getElementById('__dodge_calc')) return;
@@ -95,6 +95,12 @@
 
         // Travel result
         '#__dc .travel-result{background:#0e0102;border:1px solid #3a0a14;border-radius:8px;padding:12px;margin-top:10px;font-family:"JetBrains Mono",monospace;font-size:13px;color:#a02030;text-align:center;display:none;}',
+
+        // Countdown (orientační)
+        '#__dc .cd-box{text-align:center;font-size:28px;font-family:"JetBrains Mono",monospace;font-weight:500;padding:10px 12px 4px;background:#0e0102;border:1px solid #2a0810;border-radius:8px 8px 0 0;margin-top:10px;letter-spacing:3px;color:#d05068;}',
+        '#__dc .cd-lbl{font-size:10px;color:#b07880;text-align:center;letter-spacing:1px;text-transform:uppercase;font-weight:600;background:#0e0102;border:1px solid #2a0810;border-top:none;border-radius:0;padding:2px 12px 6px;}',
+        '#__dc .cd-warn{font-size:10px;color:#7a4048;text-align:center;letter-spacing:.3px;background:#0e0102;border:1px solid #2a0810;border-top:none;border-radius:0 0 8px 8px;padding:4px 12px 7px;line-height:1.4;}',
+        '#__dc .cd-warn b{color:#c06070;}',
 
         // Alert log
         '#__dc .alert-log{font-size:11px;color:#a07080;margin-top:8px;max-height:60px;overflow-y:auto;font-family:"JetBrains Mono",monospace;}',
@@ -442,6 +448,20 @@
     document.getElementById('__dc_discordon').addEventListener('change', saveSettings);
     loadSettings();
 
+    // ─── LAST INPUTS ─────────────────────────────────────────────────────────
+    function saveLastInputs(imp, ret, cancel) {
+        try { localStorage.setItem('__dodge_last', JSON.stringify({imp:imp, ret:ret, cancel:cancel})); } catch(e){}
+    }
+    function loadLastInputs() {
+        try {
+            var d = JSON.parse(localStorage.getItem('__dodge_last')||'{}');
+            if (d.imp)    document.getElementById('__dc_impact').value  = d.imp;
+            if (d.ret)    document.getElementById('__dc_return').value  = d.ret;
+            if (d.cancel) document.getElementById('__dc_cancel').value  = d.cancel;
+        } catch(e){}
+    }
+    loadLastInputs();
+
     // ─── AUDIO ───────────────────────────────────────────────────────────────
     var actx = null;
     function getWave() {
@@ -497,6 +517,11 @@
         if (ms==null) return '—';
         var d=new Date(ms), p=function(v,n){return String(v).padStart(n||2,'0');};
         return p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds())+':'+p(d.getMilliseconds(),3);
+    }
+    function fmtCnt(ms) {
+        if (ms<=0) return '00:00:000';
+        var tot=Math.floor(ms/1000),m=Math.floor(tot/60),s=tot%60,mil=ms%1000;
+        return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')+':'+String(mil).padStart(3,'0');
     }
     function mkRow(lbl,val,color) {
         var d=document.createElement('div'); d.className='res-row';
@@ -581,13 +606,14 @@
     }
 
     // ─── ALERT LOOP ──────────────────────────────────────────────────────────
-    // Pouze alerty pomocí setTimeout — žádný live odpočet, žádný interval.
-    // Uživatel se řídí serverovým časem ve hře.
-    var alertTimers = [], calcData = null;
+    // Alerty přes setTimeout. Odpočet je jen orientační — tikne každou sekundu,
+    // ale uživatel se musí řídit serverovým časem ve hře.
+    var alertTimers = [], cdInterval = null, calcData = null;
 
     function stopAlerts() {
         alertTimers.forEach(function(t){ clearTimeout(t); });
         alertTimers = [];
+        if (cdInterval) { clearInterval(cdInterval); cdInterval = null; }
     }
 
     function scheduleAlert(delayMs, fn) {
@@ -620,6 +646,7 @@
 
         calcData = {sendTime:sendTime, cancelTime:cancelTime, retMs:retMs, impMs:impMs, cancelS:cancelS};
         saveHistory({retStr:retStr, impStr:impStr, cancelS:cancelS, ts:Date.now()});
+        saveLastInputs(impStr, retStr, cancelS);
 
         // ── Statické zobrazení výsledků ──────────────────────────────────────
         var sec = document.createElement('div');
@@ -631,15 +658,37 @@
         sec.appendChild(mkRow('Vojsko pryč',                            (cancelS*2/60).toFixed(1)+' min', ''));
         resArea.appendChild(sec);
 
-        // ── Stavový řádek (statický, jen text — žádné tikání) ───────────────
-        var statusWrap = document.createElement('div');
-        statusWrap.style.cssText = 'text-align:center;margin:10px 0 4px;padding:10px;background:#0e0102;border:1px solid #2a0810;border-radius:8px;';
-        var statusTxt = document.createElement('div');
-        statusTxt.id = '__dc_status';
-        statusTxt.style.cssText = 'font-family:"Rajdhani",sans-serif;font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#b07880;';
-        statusTxt.textContent = '⏳ Alerty naplánované — říď se serverovým časem';
-        statusWrap.appendChild(statusTxt);
-        resArea.appendChild(statusWrap);
+        // ── Orientační odpočet s varováním ───────────────────────────────────
+        var cdBox = document.createElement('div'); cdBox.className = 'cd-box'; cdBox.id = '__dc_cdbox'; cdBox.textContent = '--:--:---';
+        var cdLbl = document.createElement('div'); cdLbl.className = 'cd-lbl'; cdLbl.id = '__dc_cdlbl'; cdLbl.textContent = 'orientační odpočet do odeslání';
+        var cdWarn = document.createElement('div'); cdWarn.className = 'cd-warn';
+        cdWarn.innerHTML = '⚠ <b>Pouze orientační</b> — řiď se serverovým časem ve hře';
+        resArea.appendChild(cdBox); resArea.appendChild(cdLbl); resArea.appendChild(cdWarn);
+
+        // Interval tikne každou sekundu — jen aktualizuje odpočet, nespouští alerty
+        cdInterval = setInterval(function(){
+            var n = Date.now();
+            var toS = calcData.sendTime - n;
+            var toC = calcData.cancelTime - n;
+            var cdEl = document.getElementById('__dc_cdbox');
+            var cdLEl = document.getElementById('__dc_cdlbl');
+            if (!cdEl) { clearInterval(cdInterval); cdInterval = null; return; }
+
+            if (toS > 0) {
+                cdEl.textContent = fmtCnt(toS);
+                cdEl.style.color = toS < 60000 ? '#f06060' : (toS < 180000 ? '#e8c040' : '#d05068');
+                cdLEl.textContent = 'orientační odpočet do odeslání';
+            } else if (toC > 0) {
+                cdEl.textContent = fmtCnt(toC);
+                cdEl.style.color = toC < 60000 ? '#f06060' : '#d0b040';
+                cdLEl.textContent = 'orientační odpočet do zrušení';
+            } else {
+                cdEl.textContent = 'HOTOVO ✓';
+                cdEl.style.color = '#7ad87a';
+                cdLEl.textContent = 'vojsko na cestě zpět';
+                clearInterval(cdInterval); cdInterval = null;
+            }
+        }, 1000);
 
         // ── Log alertů ───────────────────────────────────────────────────────
         var logLbl = document.createElement('div');
@@ -677,8 +726,6 @@
         scheduleAlert(sendTime - Date.now(), function(){
             if(sndOn) alertSound('send');
             addLog('→ ČAS ODESLÁNÍ!', 'al-send');
-            var st = document.getElementById('__dc_status');
-            if(st){ st.textContent = '➤ ODEŠLI DODGE TERAZ'; st.style.color = '#f09090'; }
         });
 
         // Alert X minut před zrušením
@@ -699,15 +746,11 @@
         scheduleAlert(cancelTime - Date.now(), function(){
             if(sndOn) alertSound('cancel');
             addLog('→ ČAS ZRUŠENÍ!', 'al-cancel');
-            var st = document.getElementById('__dc_status');
-            if(st){ st.textContent = '✕ ZRUŠ DODGE TERAZ'; st.style.color = '#e8c040'; }
         });
 
         // Dokončeno — vojsko na cestě zpět
         scheduleAlert(retMs - Date.now(), function(){
             addLog('✓ Sekvence dokončena', 'al-send');
-            var st = document.getElementById('__dc_status');
-            if(st){ st.textContent = '✓ VOJSKO NA CESTĚ ZPĚT'; st.style.color = '#7ad87a'; }
             document.getElementById('__dc_stopbtn').style.display = 'none';
         });
     }
