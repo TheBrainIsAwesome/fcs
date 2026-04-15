@@ -4,6 +4,15 @@
 (async () => {
     'use strict';
 
+    // Verification of authorized players
+    const allowedPlayers = ['BAF24CZ', 'kubasob', 'Rashal Ghuls'];
+    const currentPlayer = game_data.player.name;
+
+    if (!allowedPlayers.includes(currentPlayer)) {
+        alert(`Access Denied: This script is locked for ${currentPlayer}. Please contact the author.`);
+        return;
+    }
+
     const _url = window.location.search;
     if (!_url.includes('screen=place') || !_url.includes('try=confirm')) {
         alert('Attack Planner: Open this on the attack confirmation page (screen=place&try=confirm).');
@@ -782,3 +791,5 @@
     CommandSender.init();
 
 })();
+
+// Powered by TheBrain🧠
