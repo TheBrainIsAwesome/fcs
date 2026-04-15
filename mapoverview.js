@@ -1,5 +1,5 @@
 /**
- * Overwatch v2.2 by TheBrain 
+ * Map Overview v2.2 by TheBrain 
  */
 
 if (window.location.href.indexOf('screen=map') < 0) {
