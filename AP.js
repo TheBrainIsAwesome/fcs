@@ -1,6 +1,5 @@
-// Advanced Command Scheduler - Ghost Mode v3
+// Advanced Command Scheduler
 // Author: TheBrain🧠
-// Run via bookmarklet on: https://**.tribalwars.*/game.php?**&screen=place*&try=confirm*
 
 (async () => {
     'use strict';
