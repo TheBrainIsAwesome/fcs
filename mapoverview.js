@@ -1,42 +1,7 @@
 /**
  * Overwatch v2.2 by TheBrain 
- *
- * FIXES v2.0 → v2.1:
- *  - renderSector: data.x/data.y použito místo sector.x/sector.y pro výpočet pozice
- *  - sectorSize odvozen z data.tiles místo neexistujícího map.sectorSize
- *  - canvas rozměry opraveny (tileWidthX/Y místo neexistujícího map.scale[])
- *  - mapOverlay.reload() → TWMap.mapHandler.onReload()
- *  - unitsEnRoute překlep opraven (unitsEnroute → unitsEnRoute konzistentně)
- *  - batchGetAll race condition opravena (atomic nextIdx++)
- *  - batchSize snížen na 2 (prevence 429 Too Many Requests)
- *
- * FIXES v1 → v2.0:
- *  - Canvas ID collision / never-redraws bug fixed
- *  - String vs number comparison in sector coordinate filter fixed (parseInt)
- *  - mapOverlay.mapSubSectorSize replaced with correct TWMap.map.sectorSize
- *  - getStackColor missing default return fixed
- *  - opacity stored as string → parseFloat applied everywhere
- *  - currentCoords string prefix-match bug → replaced with Set
- *  - Race condition in staggeredGetAll fixed
- *  - packetSize now editable in UI
- *  - textarea value="" → .val() fixed
- *  - parseVillages null-safety added
- *
- * NEW FEATURES (v2.0):
- *  1. Stack trend / history  – snapshots in localStorage, ↑↓ arrows on map
- *  2. Map filter toolbar     – show only: empty / under attack / low wall / with WT
- *  3. Browser notifications  – alert on new incoming attacks vs last snapshot
- *  4. CSV export             – ready to paste into Google Sheets
- *  5. WT coverage heatmap    – overlap visualised on minimap
- *  6. Packet calculator      – click village → pop-up with send-from selector
- *  7. Cache with TTL         – localStorage data refreshed after configurable minutes
- *  8. Batch requests         – parallel requests instead of serial 200 ms stagger
- *
- * BOOKMARKLET USAGE:
- *  javascript:(function(){var s=document.createElement('script');s.src='YOUR_RAW_GITHUB_URL/overwatch.js?_='+Date.now();document.head.appendChild(s);})();
  */
 
-// ─── Guard: redirect to map page if not already there ───────────────────────
 if (window.location.href.indexOf('screen=map') < 0) {
     window.location.assign(game_data.link_base_pure + 'map');
 }
